@@ -199,3 +199,4 @@ export async function getServerSideProps() {
 
 - librería para next que ayuda al seo
 - url: https://www.npmjs.com/package/next-seo
+"# learn-next-edteam" 
