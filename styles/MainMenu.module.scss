@@ -1,0 +1,12 @@
+.menu {
+  ul {
+    display: flex;
+    gap: 1rem;
+
+    li {
+      list-style: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+    }
+  }
+}

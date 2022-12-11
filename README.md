@@ -1,34 +1,201 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# APRENDIENDO NEXT
 
-## Getting Started
+- no se puede ejecutar el "yarn start" antes de hacer un "yarn build"
+- yarn lint busca que se cumpla todas las reglas que tengas en nuestro "eslintrc.json"
 
-First, run the development server:
+## ¿qué onda con el \_app.js?
 
-```bash
-npm run dev
-# or
-yarn dev
+- Es un envoltorio de todas las páginas que tendremos en nuestro proyecto. recibe un component y revuelve con todas sus propiedades.
+- Si queremos poner un navbar que va a estar en todas las páginas, vamos a este archivo.
+
+## CSS en NextJs
+
+- globals.css: este archivo es importado desde \_app.js, aquí tendremos todo el css global para nuestro proyecto
+
+## agregando css mediante Sass
+
+- yarn add sass
+- y solo cambiar la extensión por scss => Home.module.scss, globals.scss
+
+# Error 404
+
+- Podemos modificar el contenido de nuestra respuesta creando: 404.js
+- También podemos crear una página 500.js
+
+# Manejando data
+
+## getStaticProps
+
+- los datos consumidos desde esta función serán leidos antes del build del proyecto.ó hasta que hagamos nuevamente un build a nuestro proyecto.
+- si agregamos más datos y ya hicimos el build con esta funcionalidad no serán leídos.
+- las peticiones a los datos no serán productos desde la parte del "cliente" del proyecto sino por la parte del servidor (backend).
+- Así apaguemos nuestro servidor del backend, ya nuestro proyecto habrá leido y seguirá mostrando los datos.
+- Excelente para ahorrar peticiones.
+
+```js
+export async function getStaticProps() {
+  const response = await fetch(`https://jsonplaceholder.typicode.com/todos`);
+  const data = await response.json();
+
+  return {
+    props: {
+      users: data,
+    },
+  };
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## getStaticPaths
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+- Pongamos un ejemplo, estamos creando una plataforma donde tenemos 200 cursos, y aplicamos un getStaticPaths para poder ahorrar las peticiones, pero que funcione y se creen las carpetas necesitamos de usar del contexto que es la información que viene por la ruta (params, etc). fallback y crear las paths.
+- las paths serían mejor decirle al backend que nos dé una api con todos los id's, iterarlo y crear nuestro objeto.
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+```js
+export async function getStaticProps(context) {
+  const { id } = context.params;
+  const response = await fetch(
+    `https://jsonplaceholder.typicode.com/users/${id}`
+  );
+  const user = await response.json();
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+  return {
+    props: {
+      user,
+    },
+  };
+}
 
-## Learn More
+export async function getStaticPaths() {
+  return {
+    paths: [
+      {
+        params: {
+          id: "1",
+        },
+      },
+      {
+        params: {
+          id: "2",
+        },
+      },
+      {
+        params: {
+          id: "3",
+        },
+      },
+      {
+        params: {
+          id: "4",
+        },
+      },
+      {
+        params: {
+          id: "5",
+        },
+      },
+      {
+        params: {
+          id: "6",
+        },
+      },
+      {
+        params: {
+          id: "7",
+        },
+      },
+      {
+        params: {
+          id: "8",
+        },
+      },
+      {
+        params: {
+          id: "9",
+        },
+      },
+      {
+        params: {
+          id: "10",
+        },
+      },
+    ],
+    fallback: true,
+  };
+}
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Incremental side regeneration
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```js
+export async function getStaticProps() {
+  const response = await fetch(`https://jsonplaceholder.typicode.com/todos`);
+  const data = await response.json();
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+  return {
+    props: {
+      users: data,
+    },
+    revalidate: 15,
+  };
+}
+```
 
-## Deploy on Vercel
+- Si bien lo único que hemos agregado en nuestro código ha sido el "revalidate", tiene mucha cienta por detrás. Este va a especificar que nuestro archivo estático si bien es "estático" va a estar pidiendo información al backend cada 15 segundos, pero con la condición de que debería de ver un usuario en nuestra página, pero este usuario no verá los cambios, pero si los demás, este usuario va a activar la petición.
+- Si nuestro backend se cae, no pasará nada con nuestro frontend, se quedará con la información anterior.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## getServerSideProps
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+```js
+export async function getServerSideProps() {
+  const response = await fetch(`https://jsonplaceholder.typicode.com/todos`);
+  const data = await response.json();
+
+  return {
+    props: {
+      users: data,
+    },
+  };
+}
+```
+
+- El getServerSideProps lo que hará esque cada vez que entremos a nuestra página se hará la petición al backend.
+
+## variables de entorno
+
+- .env => archivo para colocar las variables de entorno
+- .env.example => archivo para colocar las variables de entorno que necesitamos o sirve más de guía para los otros usuarios.
+- .env.local => archivo para colocar las variables de entorno pero que es muy improtante ya que será en archivo que será leído por NextJs (no la usemos mucho)
+- .env.production => archivo para colocar las variables de entorno PERO es usado en producción (cuando hacemos yarn build)
+- .env.development => archivo para colocar las variables de entorno pero que usado en desarrollo (cuando hacemos yarn dev)
+
+## next Image
+
+```js
+<Image
+  alt="auto mazda"
+  src="/images/auto.png"
+  width={700}
+  height={300}
+  placeholder="blur"
+  blurDataURL="/images/auto_peque.webp"
+/>
+```
+
+- placeholder="Blur" => este le agrega un blur a la imagen
+- blurDataURL => le agregará una imagen mientras la src cargara
+- las imagenes en nextjs van a optimizarse por el mismo framework
+
+## Next Head
+
+```js
+<Head>
+  <title>About | </title>
+</Head>
+```
+
+- es un component por ende podemos hacerlo dinámico y poner la información dinámicamente.
+
+## Next Seo
+
+- librería para next que ayuda al seo
+- url: https://www.npmjs.com/package/next-seo
